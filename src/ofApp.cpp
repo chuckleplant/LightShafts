@@ -18,14 +18,6 @@ void ofApp::setup(){
     numSamples.setMax(200);
     
     
-    
-    /*
-     float decay=0.96815;
-     float exposure=0.2;
-     float density=0.926;
-     float weight=0.58767;
-     
-     */
     parameters.setName("settings");
     parameters.add(decay.set("Decay", 0.96815));
     parameters.add(exposure.set("Exposure", 0.2));
@@ -34,7 +26,7 @@ void ofApp::setup(){
     parameters.add(numSamples.set("Samples", 100));
     
     gui.setup(parameters);
-
+    gui.setPosition(100, 100);
     
     
     
