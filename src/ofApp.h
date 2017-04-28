@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ofMain.h"
+#include "ofxGui.h"
 
 class ofApp : public ofBaseApp{
 
@@ -40,4 +41,16 @@ class ofApp : public ofBaseApp{
 
 		unsigned int renderWidth;
 		unsigned int renderHeight;
+    
+        ofxPanel gui;
+    ofParameter<float> decay;
+    ofParameter<float> exposure;
+    ofParameter<float> density;
+    ofParameter<float> weight;
+    ofParameter<int> numSamples;
+    
+        ofParameterGroup parameters;
+        ofXml settings;
+        ofTrueTypeFont font;
+
 };

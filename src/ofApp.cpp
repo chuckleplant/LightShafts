@@ -6,7 +6,39 @@ void ofApp::setup(){
 	renderHeight = 720;
 	int numBoxes = 50;
 
+    decay.setMin(0.0);
+    decay.setMax(2.0);
+    exposure.setMin(0.0);
+    exposure.setMax(2.0);
+    weight.setMin(0.0);
+    weight.setMax(2.0);
+    density.setMin(0.0);
+    density.setMax(2.0);
+    numSamples.setMin(1);
+    numSamples.setMax(200);
+    
+    
+    
+    /*
+     float decay=0.96815;
+     float exposure=0.2;
+     float density=0.926;
+     float weight=0.58767;
+     
+     */
+    parameters.setName("settings");
+    parameters.add(decay.set("Decay", 0.96815));
+    parameters.add(exposure.set("Exposure", 0.2));
+    parameters.add(weight.set("Weight", 0.58767));
+    parameters.add(density.set("Density", 0.926));
+    parameters.add(numSamples.set("Samples", 100));
+    
+    gui.setup(parameters);
 
+    
+    
+    
+    // Setup global settings
 	ofBackground(0, 0, 0);
 	ofSetVerticalSync(true);
 	ofEnableDepthTest();
@@ -116,6 +148,11 @@ void ofApp::draw(){
 	ofVec3f light2DPosition = camera.worldToScreen(light.getGlobalPosition());
 	ofVec2f normalizedLightPos = ofVec2f(light2DPosition.x / (float)renderWidth, light2DPosition.y / (float)renderHeight);
 	shader.begin();
+    shader.setUniform1f("decay", decay.get());
+    shader.setUniform1f("exposure", exposure.get());
+    shader.setUniform1f("weight", weight.get());
+    shader.setUniform1f("density", density.get());
+    shader.setUniform1i("numSamples", numSamples.get());
 		shader.setUniformTexture("UserMapSampler", lightShaftMask.getTexture(), 1);
 		shader.setUniform2f("lightPositionOnScreen", normalizedLightPos);
 		ofFill();
@@ -126,11 +163,6 @@ void ofApp::draw(){
 	// Draw scene
 	ofSetColor(255);
 	drawScene();
-
-	//lightShaftMask.draw(0, 0);
-	//lightShaftResult.draw(0, 0);
-	//mainRender.draw(0, 0);
-	//return;
 
 
 
@@ -143,6 +175,9 @@ void ofApp::draw(){
 
 	ofDrawBitmapStringHighlight(ofToString(ofGetFrameRate()), 10, 10);
 
+    
+    ofSetColor(255);
+    gui.draw();
 }
 
 //--------------------------------------------------------------
