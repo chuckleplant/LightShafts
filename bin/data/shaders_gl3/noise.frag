@@ -3,6 +3,7 @@
 
 /// Our light scattering pass texture
 uniform sampler2D UserMapSampler;
+uniform sampler2D SceneSampler;
 
 /// Indicate where is the light source on the screen (2D position)
 uniform vec2 lightPositionOnScreen;
@@ -28,7 +29,9 @@ out vec4 outputColor;
 
 void main()
 {
+
     vec2 tc = varyingtexcoord;
+    vec4 sceneColor = texture(SceneSampler, tc);
     vec2 deltaTexCoord = (tc - lightPositionOnScreen.xy);
     deltaTexCoord *= 1.0 / float(numSamples) * density;
     float illuminationDecay = 1.0;
@@ -41,5 +44,5 @@ void main()
         color += sample;
         illuminationDecay *= decay;
     }
-    outputColor = color;
+    outputColor = sceneColor + color;
 }

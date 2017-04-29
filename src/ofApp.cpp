@@ -4,10 +4,11 @@
 void ofApp::setup(){
 	renderWidth = 1280;
 	renderHeight = 720;
+    downsampleFactor = 1;
 	int numBoxes = 50;
 
-    decay.setMin(0.0);
-    decay.setMax(2.0);
+    decay.setMin(0.8);
+    decay.setMax(1.0);
     exposure.setMin(0.0);
     exposure.setMax(2.0);
     weight.setMin(0.0);
@@ -24,103 +25,109 @@ void ofApp::setup(){
     parameters.add(weight.set("Weight", 0.58767));
     parameters.add(density.set("Density", 0.926));
     parameters.add(numSamples.set("Samples", 100));
+    parameters.add(sunRadius.set("Sun radius", 50.0));
     
     gui.setup(parameters);
     gui.setPosition(100, 100);
     
     
+    setupSceneParameters();
     
-    // Setup global settings
-	ofBackground(0, 0, 0);
-	ofSetVerticalSync(true);
-	ofEnableDepthTest();
-	ofEnableAlphaBlending();
-	ofSetSmoothLighting(true);
 
-	// Setup random box positions;
-	for (size_t i = 0; i < numBoxes; i++)
-	{
-		boxPositions.emplace_back(ofVec3f(
-			100 - ofRandom(200),
-			100 - ofRandom(200),
-			100 - ofRandom(200)));
-	}
-
-	// Objects setup
-	sphere.setRadius(50);
-	sphere.setGlobalPosition(-50, -50, -50);
-	box.setHeight(30);
-	box.setWidth(30);
-	box.setDepth(30);
-
+    
 	// Light setup
+    setupImageResourcesFromImage("firewatch_art.png");
 	lightBillboard.load("rainbow.png");
-	light.setDiffuseColor(ofColor(255.f, 255.f, 255.f));
-	light.setSpecularColor(ofColor(255.f, 255.f, 255.f));
-	light.setPosition(200, 200, 200);
-
-	// Material setup
-	material.setShininess(64);
-
-	// FBO setup
-	lightShaftMask.allocate(renderWidth, renderHeight, GL_RGBA);
-	lightShaftResult.allocate(renderWidth, renderHeight, GL_RGBA);
-	mainRender.allocate(renderWidth, renderHeight, GL_RGBA);
-
 
 	// Shader setup
 	shader.load("shaders_gl3/noise.vert", "shaders_gl3/noise.frag");	
 }
 
+
+void ofApp::setupSceneParameters(){
+    ofBackground(0, 0, 0);
+    ofSetVerticalSync(true);
+    ofEnableDepthTest();
+    ofEnableAlphaBlending();
+}
+
+
+void ofApp::setupImageResourcesFromImage(string const & imageFilename)
+{
+    if(sceneImage.load(imageFilename))
+    {
+        renderWidth = sceneImage.getWidth();
+        renderHeight = sceneImage.getHeight();
+        
+        lightShaftMask.allocate(renderWidth, renderHeight, GL_RGBA);
+        lightShaftResult.allocate(renderWidth/downsampleFactor, renderHeight/downsampleFactor, GL_RGBA);
+        mainRender.allocate(renderWidth, renderHeight, GL_RGBA);
+        
+        recomputeRenderLayout(ofGetWindowWidth(), ofGetWindowHeight());
+    }
+    
+}
+
+
+void ofApp::recomputeRenderLayout(unsigned int windowWidth, unsigned int windowHeight){
+    float imageAspect = renderWidth/(float)renderHeight;
+    float windowAspect = windowWidth/(float)windowHeight;
+    if(imageAspect > windowAspect){
+        renderLayout.x = 0;
+        renderLayout.width = windowWidth;
+        renderLayout.height = windowWidth / imageAspect;
+        renderLayout.y = (windowHeight - renderLayout.height)/2;
+    }
+    else{
+        renderLayout.y = 0;
+        renderLayout.height = windowHeight;
+        renderLayout.width = windowHeight * imageAspect;
+        renderLayout.x = (windowWidth - renderLayout.width)/2;
+    }
+}
+
+
+
+
+
+
 //--------------------------------------------------------------
 void ofApp::update(){
-
+    sunPosition.x = mouseX;
+    sunPosition.y = mouseY;
 }
 
 void ofApp::drawShafts()
 {
 	ofDisableDepthTest();
 	lightShaftMask.begin();
-		ofClear(0, 0);
-		ofVec3f light2DPosition = camera.worldToScreen(light.getGlobalPosition());
-		lightBillboard.draw(light2DPosition.x - lightBillboard.getWidth()/2, light2DPosition.y - lightBillboard.getHeight()/2, light2DPosition.z);
-		camera.begin();
-			ofSetColor(ofColor::black);
-
-			for (auto & position : boxPositions)
-			{
-				ofTranslate(position);
-				box.draw();
-			}
-			
-			sphere.draw();
-		camera.end();
+    ofClear(0, 0);
+    
+    ofSetColor(ofColor::orangeRed);
+    ofDrawCircle(sunPosition.x, sunPosition.y, sunRadius.get());
+    
+    ofSetColor(ofColor::black);
+    sceneImage.draw(0,0);
+    
 	lightShaftMask.end();
-	
 }
 
 void ofApp::drawScene()
 {
-	ofEnableLighting();
-	mainRender.begin();
-	ofDisableBlendMode();
-	ofEnableDepthTest();
+    float fboScaleWidth = mainRender.getWidth() / ofGetWindowWidth();
+    float fboScaleHeight = mainRender.getHeight() / ofGetWindowHeight();
+	
+    mainRender.begin();
 	ofClear(0, 1);
-    ofBackgroundGradient(ofColor::royalBlue, ofColor::darkBlue);
-	camera.begin();
-		light.enable();
-		material.begin();
-			ofFill();
-			for (auto & position : boxPositions)
-			{
-				ofTranslate(position);
-				box.draw();
-			}
-			sphere.draw();
-		material.end();	
-	camera.end();
+    ofPushMatrix();
+    ofScale(fboScaleWidth, fboScaleHeight);
+    ofBackgroundGradient(ofColor(255,235,197), ofColor(245,225,187));
+    ofPopMatrix();
+    ofSetColor(ofColor::white);
+    ofDrawCircle(sunPosition.x, sunPosition.y, sunRadius.get());
+    
+    sceneImage.draw(0,0);
 	mainRender.end();
-	ofDisableLighting();
 }
 
 //--------------------------------------------------------------
@@ -129,43 +136,47 @@ void ofApp::draw(){
 	// Draw oppacity
 	ofSetColor(255);
 	drawShafts();
+    
+    ofSetColor(255);
+    drawScene();
 
     
-    
-    
 	// Draw shafts
+  
 	ofSetColor(255);
 	lightShaftResult.begin();
 	ofClear(0, 0);
-	ofVec3f light2DPosition = camera.worldToScreen(light.getGlobalPosition());
-	ofVec2f normalizedLightPos = ofVec2f(light2DPosition.x / (float)renderWidth, light2DPosition.y / (float)renderHeight);
+	ofVec2f normalizedLightPos = ofVec2f(sunPosition.x / (float)renderWidth, sunPosition.y / (float)renderHeight);
 	shader.begin();
     shader.setUniform1f("decay", decay.get());
     shader.setUniform1f("exposure", exposure.get());
     shader.setUniform1f("weight", weight.get());
     shader.setUniform1f("density", density.get());
     shader.setUniform1i("numSamples", numSamples.get());
-		shader.setUniformTexture("UserMapSampler", lightShaftMask.getTexture(), 1);
-		shader.setUniform2f("lightPositionOnScreen", normalizedLightPos);
-		ofFill();
-		lightBillboard.draw(0, 0, renderWidth, renderHeight);
+    shader.setUniformTexture("SceneSampler", mainRender.getTexture(), 1);
+    shader.setUniformTexture("UserMapSampler", lightShaftMask.getTexture(), 2);
+	shader.setUniform2f("lightPositionOnScreen", normalizedLightPos);
+	ofFill();
+    sceneImage.draw(0,0,renderWidth, renderHeight);
 	shader.end();
 	lightShaftResult.end();
 
-	// Draw scene
-	ofSetColor(255);
-	drawScene();
+    lightShaftResult.draw(renderLayout);
+    
+    
+    //mainRender.draw(renderLayout);
+    //lightShaftResult.draw(renderLayout);
+    
+    //return;
+    
+    //ofSetColor(255);
+	//ofClear(0, 0);
+	//ofDisableDepthTest();
+	//ofEnableBlendMode(ofBlendMode::OF_BLENDMODE_ADD);
+	//mainRender.draw(renderLayout);
+	//lightShaftResult.draw(renderLayout);
+    //ofDisableBlendMode();
 
-
-
-	ofClear(0, 0);
-	ofDisableDepthTest();
-	ofEnableBlendMode(ofBlendMode::OF_BLENDMODE_ADD);
-	mainRender.draw(0, 0);
-	lightShaftResult.draw(0, 0);
-    ofDisableBlendMode();
-
-	ofDrawBitmapStringHighlight(ofToString(ofGetFrameRate()), 10, 10);
 
     
     ofSetColor(255);
@@ -214,7 +225,7 @@ void ofApp::mouseExited(int x, int y){
 
 //--------------------------------------------------------------
 void ofApp::windowResized(int w, int h){
-
+    recomputeRenderLayout(w, h);
 }
 
 //--------------------------------------------------------------
