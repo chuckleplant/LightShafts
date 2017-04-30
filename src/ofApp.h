@@ -26,6 +26,8 @@ public:
     void drawShaftsMask();
     void drawScene();
     
+    void loadImageButtonPressed();
+    
     ofImage lightBillboard;
     ofImage sceneImage;
     ofShader shader;
@@ -50,7 +52,8 @@ public:
     ofParameter<float> density;
     ofParameter<float> weight;
     ofParameter<int> numSamples;
-    
+    ofParameter<bool> moveSun;
+    ofxButton loadImageButton;
     
     
     ofParameterGroup parameters;
@@ -60,5 +63,5 @@ private:
     void setupImageResourcesFromImage(string const & imageFilename);
     void setupSceneParameters();
     void recomputeRenderLayout(unsigned int windowWidth, unsigned int windowHeight);
-    void renderBackground();
+    void renderBackground(ofFbo const & targetBuffer);
 };

@@ -2,11 +2,10 @@
 
 //--------------------------------------------------------------
 void ofApp::setup(){
-	renderWidth = 1280;
-	renderHeight = 720;
+    renderWidth = 1280;
+    renderHeight = 720;
     downsampleFactor = 1;
-	int numBoxes = 50;
-
+    
     decay.setMin(0.8);
     decay.setMax(1.0);
     exposure.setMin(0.0);
@@ -16,12 +15,13 @@ void ofApp::setup(){
     density.setMin(0.0);
     density.setMax(2.0);
     numSamples.setMin(1);
-    numSamples.setMax(200);
+    numSamples.setMax(300);
     sunRadius.setMin(10);
     sunRadius.setMax(500);
     
     
     parameters.setName("settings");
+    parameters.add(moveSun.set("Move sun ([spacebar])", true));
     parameters.add(decay.set("Decay", 0.96815));
     parameters.add(exposure.set("Exposure", 0.2));
     parameters.add(weight.set("Weight", 0.58767));
@@ -33,18 +33,25 @@ void ofApp::setup(){
     parameters.add(accentColor.set("Accent color", ofColor(235,215,167)));
     parameters.add(sunColor.set("Sun color", ofColor::orangeRed));
     
-
+    loadImageButton.addListener(this, &ofApp::loadImageButtonPressed);
     
     gui.setup(parameters);
+    gui.add(loadImageButton.setup("Load image"));
     gui.setPosition(100, 100);
     setupSceneParameters();
     
-
-    setupImageResourcesFromImage("firewatch_art.png");
-	lightBillboard.load("rainbow.png");
-
-	// Shader setup
-	shader.load("shaders_gl3/noise.vert", "shaders_gl3/noise.frag");	
+    ofXml settingsXml;
+    if(settingsXml.load("settings.xml"))
+    {
+        gui.loadFrom(settingsXml);
+    }
+    
+    
+    setupImageResourcesFromImage("RDR2.png");
+    lightBillboard.load("rainbow.png");
+    
+    // Shader setup
+    shader.load("shaders_gl3/noise.vert", "shaders_gl3/noise.frag");
 }
 
 
@@ -62,14 +69,14 @@ void ofApp::setupImageResourcesFromImage(string const & imageFilename)
     {
         renderWidth = sceneImage.getWidth();
         renderHeight = sceneImage.getHeight();
-        
         lightShaftMask.allocate(renderWidth, renderHeight, GL_RGBA);
         lightShaftResult.allocate(renderWidth, renderHeight, GL_RGBA);
         mainRender.allocate(renderWidth, renderHeight, GL_RGBA);
-        
-        ofSetWindowShape(renderWidth, renderHeight);
-        
         recomputeRenderLayout(ofGetWindowWidth(), ofGetWindowHeight());
+    }
+    else
+    {
+        ofSystemAlertDialog("Could not load image file ("+ imageFilename +")");
     }
     
 }
@@ -95,17 +102,24 @@ void ofApp::recomputeRenderLayout(unsigned int windowWidth, unsigned int windowH
 
 //--------------------------------------------------------------
 void ofApp::update(){
-    unsigned int originMouseX = mouseX - renderLayout.x;
-    unsigned int originMouseY = mouseY - renderLayout.y;
-    ofVec2f normalizedMousePos = ofVec2f(originMouseX / renderLayout.width, originMouseY / renderLayout.height);
-    sunPosition.x = normalizedMousePos.x * (renderWidth);
-    sunPosition.y = normalizedMousePos.y * (renderHeight);
+    if(moveSun)
+    {
+        unsigned int originMouseX = mouseX - renderLayout.x;
+        unsigned int originMouseY = mouseY - renderLayout.y;
+        ofVec2f normalizedMousePos = ofVec2f(originMouseX / renderLayout.width, originMouseY / renderLayout.height);
+        sunPosition.x = normalizedMousePos.x * (renderWidth);
+        sunPosition.y = normalizedMousePos.y * (renderHeight);
+    }
 }
 
 
-void ofApp::renderBackground()
+void ofApp::renderBackground(ofFbo const & targetBuffer)
 {
+    ofPushMatrix();
+    ofVec2f fboScale = ofVec2f(targetBuffer.getWidth() / ofGetWindowWidth(), targetBuffer.getHeight() / ofGetWindowHeight());
+    ofScale(fboScale);
     ofBackgroundGradient(accentColor, baseColor);
+    ofPopMatrix();
 }
 
 
@@ -130,38 +144,32 @@ void ofApp::drawShaftsComposition(){
 }
 
 void ofApp::drawShaftsMask(){
-	lightShaftMask.begin();
+    lightShaftMask.begin();
     ofClear(0, 0);
-    
     ofSetColor(sunColor);
     ofDrawCircle(sunPosition.x, sunPosition.y, sunRadius.get());
-    
     ofSetColor(ofColor::black);
     sceneImage.draw(0,0);
-    
-	lightShaftMask.end();
+    lightShaftMask.end();
 }
 
 void ofApp::drawScene()
 {
     float fboScaleWidth = mainRender.getWidth() / ofGetWindowWidth();
     float fboScaleHeight = mainRender.getHeight() / ofGetWindowHeight();
-	
+    
     mainRender.begin();
-	ofClear(0, 1);
+    ofClear(0, 1);
     ofSetColor(255);
-    ofPushMatrix();
-    ofScale(fboScaleWidth, fboScaleHeight);
-    renderBackground();
-    ofPopMatrix();
+    renderBackground(mainRender);
     ofDrawCircle(sunPosition.x, sunPosition.y, sunRadius.get());
     sceneImage.draw(0,0);
-	mainRender.end();
+    mainRender.end();
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-	drawShaftsMask();
+    drawShaftsMask();
     drawScene();
     drawShaftsComposition();
     
@@ -170,44 +178,59 @@ void ofApp::draw(){
     gui.draw();
 }
 
+
+void ofApp::loadImageButtonPressed()
+{
+    ofFileDialogResult dialogRestult = ofSystemLoadDialog("Select background image (transparency required)", false, ofToDataPath(""));
+    if(dialogRestult.bSuccess)
+    {
+        string imageFile = dialogRestult.getPath();
+        setupImageResourcesFromImage(imageFile);
+    }
+}
+
+
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-
+    if(key == ' ')
+    {
+        moveSun = !moveSun;
+    }
 }
 
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key){
-
+    
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseMoved(int x, int y ){
-
+    
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseDragged(int x, int y, int button){
-
+    
 }
 
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){
-
+    
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseReleased(int x, int y, int button){
-
+    
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseEntered(int x, int y){
-
+    
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseExited(int x, int y){
-
+    
 }
 
 //--------------------------------------------------------------
@@ -217,11 +240,11 @@ void ofApp::windowResized(int w, int h){
 
 //--------------------------------------------------------------
 void ofApp::gotMessage(ofMessage msg){
-
+    
 }
 
 
 //--------------------------------------------------------------
 void ofApp::dragEvent(ofDragInfo dragInfo){ 
-
+    
 }
