@@ -27,6 +27,7 @@ public:
     void drawScene();
     
     void loadImageButtonPressed();
+    void sunResolutionChanged(int& circleResolution);
     
     ofImage lightBillboard;
     ofImage sceneImage;
@@ -52,6 +53,7 @@ public:
     ofParameter<float> density;
     ofParameter<float> weight;
     ofParameter<int> numSamples;
+    ofParameter<int> sunResolution;
     ofParameter<bool> moveSun;
     ofxButton loadImageButton;
     
