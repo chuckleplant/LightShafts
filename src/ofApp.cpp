@@ -51,7 +51,7 @@ void ofApp::setup(){
 void ofApp::setupSceneParameters(){
     ofBackground(0, 0, 0);
     ofSetVerticalSync(true);
-    ofEnableDepthTest();
+    ofDisableDepthTest();
     ofEnableAlphaBlending();
 }
 
@@ -64,7 +64,7 @@ void ofApp::setupImageResourcesFromImage(string const & imageFilename)
         renderHeight = sceneImage.getHeight();
         
         lightShaftMask.allocate(renderWidth, renderHeight, GL_RGBA);
-        lightShaftResult.allocate(renderWidth/downsampleFactor, renderHeight/downsampleFactor, GL_RGBA);
+        lightShaftResult.allocate(renderWidth, renderHeight, GL_RGBA);
         mainRender.allocate(renderWidth, renderHeight, GL_RGBA);
         
         ofSetWindowShape(renderWidth, renderHeight);
@@ -129,9 +129,7 @@ void ofApp::drawShaftsComposition(){
     lightShaftResult.end();
 }
 
-void ofApp::drawShaftsMask()
-{
-	ofDisableDepthTest();
+void ofApp::drawShaftsMask(){
 	lightShaftMask.begin();
     ofClear(0, 0);
     
