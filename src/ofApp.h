@@ -22,7 +22,8 @@ public:
     void dragEvent(ofDragInfo dragInfo);
     void gotMessage(ofMessage msg);
     
-    void drawShafts();
+    void drawShaftsComposition();
+    void drawShaftsMask();
     void drawScene();
     
     ofImage lightBillboard;
@@ -40,6 +41,9 @@ public:
     ofVec2f sunPosition;
     ofxPanel gui;
     
+    ofParameter<ofColor> baseColor;
+    ofParameter<ofColor> accentColor;
+    ofParameter<ofColor> sunColor;
     ofParameter<float> sunRadius;
     ofParameter<float> decay;
     ofParameter<float> exposure;
@@ -47,9 +51,7 @@ public:
     ofParameter<float> weight;
     ofParameter<int> numSamples;
     
-    ofxColorSlider baseColor;
-    ofxColorSlider accentColor;
-    ofxColorSlider sunColor;
+    
     
     ofParameterGroup parameters;
     ofXml settings;

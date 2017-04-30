@@ -29,22 +29,17 @@ void ofApp::setup(){
     parameters.add(numSamples.set("Samples", 100));
     parameters.add(sunRadius.set("Sun radius", 50.0));
     
-    //ofColor(255,235,197), ofColor(245,225,187)
+    parameters.add(baseColor.set("Base color", ofColor(255,235,197)));
+    parameters.add(accentColor.set("Accent color", ofColor(235,215,167)));
+    parameters.add(sunColor.set("Sun color", ofColor::orangeRed));
+    
 
     
     gui.setup(parameters);
-    gui.add(baseColor.setup("Base color", ofColor(255,235,197), ofColor(0, 0), ofColor(255, 255)));
-    gui.add(accentColor.setup("Accent color", ofColor(235,215,167), ofColor(0, 0), ofColor(255, 255)));
-    gui.add(sunColor.setup("Sun color", ofColor::orangeRed, ofColor(0,0), ofColor(255,255)));
     gui.setPosition(100, 100);
-    
-    
-    
     setupSceneParameters();
     
 
-    
-	// Light setup
     setupImageResourcesFromImage("firewatch_art.png");
 	lightBillboard.load("rainbow.png");
 
@@ -114,7 +109,27 @@ void ofApp::renderBackground()
 }
 
 
-void ofApp::drawShafts()
+void ofApp::drawShaftsComposition(){
+    ofSetColor(255);
+    lightShaftResult.begin();
+    ofClear(0, 0);
+    ofVec2f normalizedLightPos = ofVec2f(sunPosition.x / (float)renderWidth, sunPosition.y / (float)renderHeight);
+    shader.begin();
+    shader.setUniform1f("decay", decay.get());
+    shader.setUniform1f("exposure", exposure.get());
+    shader.setUniform1f("weight", weight.get());
+    shader.setUniform1f("density", density.get());
+    shader.setUniform1i("numSamples", numSamples.get());
+    shader.setUniformTexture("SceneSampler", mainRender.getTexture(), 1);
+    shader.setUniformTexture("UserMapSampler", lightShaftMask.getTexture(), 2);
+    shader.setUniform2f("lightPositionOnScreen", normalizedLightPos);
+    ofFill();
+    sceneImage.draw(0,0,renderWidth, renderHeight);
+    shader.end();
+    lightShaftResult.end();
+}
+
+void ofApp::drawShaftsMask()
 {
 	ofDisableDepthTest();
 	lightShaftMask.begin();
@@ -148,38 +163,13 @@ void ofApp::drawScene()
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-
-	drawShafts();
-    
+	drawShaftsMask();
     drawScene();
-
+    drawShaftsComposition();
     
-	// Draw shafts
-  
-	ofSetColor(255);
-	lightShaftResult.begin();
-	ofClear(0, 0);
-	ofVec2f normalizedLightPos = ofVec2f(sunPosition.x / (float)renderWidth, sunPosition.y / (float)renderHeight);
-	shader.begin();
-    shader.setUniform1f("decay", decay.get());
-    shader.setUniform1f("exposure", exposure.get());
-    shader.setUniform1f("weight", weight.get());
-    shader.setUniform1f("density", density.get());
-    shader.setUniform1i("numSamples", numSamples.get());
-    shader.setUniformTexture("SceneSampler", mainRender.getTexture(), 1);
-    shader.setUniformTexture("UserMapSampler", lightShaftMask.getTexture(), 2);
-	shader.setUniform2f("lightPositionOnScreen", normalizedLightPos);
-	ofFill();
-    sceneImage.draw(0,0,renderWidth, renderHeight);
-	shader.end();
-	lightShaftResult.end();
-
     lightShaftResult.draw(renderLayout);
-    
     ofSetColor(255);
     gui.draw();
-    
-    
 }
 
 //--------------------------------------------------------------
