@@ -17,6 +17,8 @@ void ofApp::setup(){
     density.setMax(2.0);
     numSamples.setMin(1);
     numSamples.setMax(200);
+    sunRadius.setMin(10);
+    sunRadius.setMax(500);
     
     
     parameters.setName("settings");
@@ -27,8 +29,15 @@ void ofApp::setup(){
     parameters.add(numSamples.set("Samples", 100));
     parameters.add(sunRadius.set("Sun radius", 50.0));
     
+    //ofColor(255,235,197), ofColor(245,225,187)
+
+    
     gui.setup(parameters);
+    gui.add(baseColor.setup("Base color", ofColor(255,235,197), ofColor(0, 0), ofColor(255, 255)));
+    gui.add(accentColor.setup("Accent color", ofColor(235,215,167), ofColor(0, 0), ofColor(255, 255)));
+    gui.add(sunColor.setup("Sun color", ofColor::orangeRed, ofColor(0,0), ofColor(255,255)));
     gui.setPosition(100, 100);
+    
     
     
     setupSceneParameters();
@@ -63,6 +72,8 @@ void ofApp::setupImageResourcesFromImage(string const & imageFilename)
         lightShaftResult.allocate(renderWidth/downsampleFactor, renderHeight/downsampleFactor, GL_RGBA);
         mainRender.allocate(renderWidth, renderHeight, GL_RGBA);
         
+        ofSetWindowShape(renderWidth, renderHeight);
+        
         recomputeRenderLayout(ofGetWindowWidth(), ofGetWindowHeight());
     }
     
@@ -87,15 +98,21 @@ void ofApp::recomputeRenderLayout(unsigned int windowWidth, unsigned int windowH
 }
 
 
-
-
-
-
 //--------------------------------------------------------------
 void ofApp::update(){
-    sunPosition.x = mouseX;
-    sunPosition.y = mouseY;
+    unsigned int originMouseX = mouseX - renderLayout.x;
+    unsigned int originMouseY = mouseY - renderLayout.y;
+    ofVec2f normalizedMousePos = ofVec2f(originMouseX / renderLayout.width, originMouseY / renderLayout.height);
+    sunPosition.x = normalizedMousePos.x * (renderWidth);
+    sunPosition.y = normalizedMousePos.y * (renderHeight);
 }
+
+
+void ofApp::renderBackground()
+{
+    ofBackgroundGradient(accentColor, baseColor);
+}
+
 
 void ofApp::drawShafts()
 {
@@ -103,7 +120,7 @@ void ofApp::drawShafts()
 	lightShaftMask.begin();
     ofClear(0, 0);
     
-    ofSetColor(ofColor::orangeRed);
+    ofSetColor(sunColor);
     ofDrawCircle(sunPosition.x, sunPosition.y, sunRadius.get());
     
     ofSetColor(ofColor::black);
@@ -119,13 +136,12 @@ void ofApp::drawScene()
 	
     mainRender.begin();
 	ofClear(0, 1);
+    ofSetColor(255);
     ofPushMatrix();
     ofScale(fboScaleWidth, fboScaleHeight);
-    ofBackgroundGradient(ofColor(255,235,197), ofColor(245,225,187));
+    renderBackground();
     ofPopMatrix();
-    ofSetColor(ofColor::white);
     ofDrawCircle(sunPosition.x, sunPosition.y, sunRadius.get());
-    
     sceneImage.draw(0,0);
 	mainRender.end();
 }
@@ -133,11 +149,8 @@ void ofApp::drawScene()
 //--------------------------------------------------------------
 void ofApp::draw(){
 
-	// Draw oppacity
-	ofSetColor(255);
 	drawShafts();
     
-    ofSetColor(255);
     drawScene();
 
     
@@ -163,24 +176,10 @@ void ofApp::draw(){
 
     lightShaftResult.draw(renderLayout);
     
-    
-    //mainRender.draw(renderLayout);
-    //lightShaftResult.draw(renderLayout);
-    
-    //return;
-    
-    //ofSetColor(255);
-	//ofClear(0, 0);
-	//ofDisableDepthTest();
-	//ofEnableBlendMode(ofBlendMode::OF_BLENDMODE_ADD);
-	//mainRender.draw(renderLayout);
-	//lightShaftResult.draw(renderLayout);
-    //ofDisableBlendMode();
-
-
-    
     ofSetColor(255);
     gui.draw();
+    
+    
 }
 
 //--------------------------------------------------------------

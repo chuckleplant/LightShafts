@@ -38,8 +38,6 @@ public:
     unsigned int renderHeight;
     ofRectangle renderLayout;
     ofVec2f sunPosition;
-    
-    
     ofxPanel gui;
     
     ofParameter<float> sunRadius;
@@ -49,6 +47,10 @@ public:
     ofParameter<float> weight;
     ofParameter<int> numSamples;
     
+    ofxColorSlider baseColor;
+    ofxColorSlider accentColor;
+    ofxColorSlider sunColor;
+    
     ofParameterGroup parameters;
     ofXml settings;
     ofTrueTypeFont font;
@@ -56,5 +58,5 @@ private:
     void setupImageResourcesFromImage(string const & imageFilename);
     void setupSceneParameters();
     void recomputeRenderLayout(unsigned int windowWidth, unsigned int windowHeight);
-    
+    void renderBackground();
 };
